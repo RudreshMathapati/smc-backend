@@ -191,21 +191,20 @@ const allowedOrigins = [
 ];
 
 // ✅ CORS Setup
-const corsOptions = {
+app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
-      callback(null, true);
+      return callback(null, true);
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
-};
+}));
 
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.options("*", cors());
 
 app.use(cookieParser());
 app.use(express.json());
@@ -226,9 +225,10 @@ app.use("/api/gps", gpsRoutes);
 app.use("/api/conductor-bus", conductorBusRoutes);
 app.use("/api/reports", reportRoutes);
 
-// 🛰️ Socket.IO Setup
+// 🛰️ Create HTTP server
 const server = http.createServer(app);
 
+// 🛰️ Socket.IO Setup
 const io = new SocketServer(server, {
   cors: {
     origin: allowedOrigins,
@@ -238,10 +238,10 @@ const io = new SocketServer(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("📡 Client connected to socket.io");
+  console.log("📡 Client connected:", socket.id);
 
   socket.on("disconnect", () => {
-    console.log("❌ Client disconnected");
+    console.log("❌ Client disconnected:", socket.id);
   });
 });
 
