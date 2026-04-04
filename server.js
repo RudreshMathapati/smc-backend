@@ -27,26 +27,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ✅ Allowed Origins (Local + Vercel)
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://smc-frontend-three.vercel.app",
-  "https://smc-frontend-git-main-rudreshmathapatis-projects.vercel.app",
-  "https://smc-frontend-mim6z9h2z-rudreshmathapatis-projects.vercel.app"
-];
 
-// ✅ CORS Setup
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(null, true);
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  credentials: true,
-}));
 
 app.options("*", cors());
 
@@ -69,6 +50,27 @@ app.use("/api/gps", gpsRoutes);
 app.use("/api/conductor-bus", conductorBusRoutes);
 app.use("/api/reports", reportRoutes);
 
+
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://smc-frontend-three.vercel.app",
+  "https://smc-frontend-git-main-rudreshmathapatis-projects.vercel.app",
+  "https://smc-frontend-mim6z9h2z-rudreshmathapatis-projects.vercel.app"
+];
+
+// ✅ CORS Setup
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(null, true);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+}));
 // 🛰️ Create HTTP server
 const server = http.createServer(app);
 
