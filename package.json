@@ -4,7 +4,11 @@
     "type": "module",
     "main": "server.js",
     "scripts": {
+<<<<<<< HEAD
         "start": "node ./server.js",
+=======
+        "start": "node /server.js",
+>>>>>>> 90a4701 (update)
         "dev": "nodemon ./server.js"
     },
     "dependencies": {

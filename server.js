@@ -176,19 +176,30 @@ app.use("/api/reports", reportRoutes);
 // 🛰️ Socket.IO Setup
 const server = http.createServer(app);
 
+// const io = new SocketServer(server, {
+//     cors: {
+//         origin: allowedOrigins,
+//         methods: ["GET", "POST"],
+//         credentials: true
+//     },
+// });
 const io = new SocketServer(server, {
-    cors: {
-        origin: allowedOrigins,
-        methods: ["GET", "POST"],
-        credentials: true
-    },
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  },
+  pingTimeout: 60000,
+  pingInterval: 25000,
 });
 io.on("connection", (socket) => {
-    console.log("📡 Client connected to socket.io");
-    
-    socket.on("disconnect", () => {
-        console.log("❌ Client disconnected");
-    });
+  console.log("Client connected:", socket.id);
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected:", socket.id);
+  });
+
+  // VERY IMPORTANT → cleanup
+  socket.removeAllListeners();
 });
 
 // 🚀 Start Server
