@@ -4,13 +4,9 @@
     "type": "module",
     "main": "server.js",
     "scripts": {
-<<<<<<< HEAD
-        "start": "node ./server.js",
-=======
-        "start": "node /server.js",
->>>>>>> 90a4701 (update)
-        "dev": "nodemon ./server.js"
-    },
+  "start": "node --max-old-space-size=384 ./server.js",
+  "dev": "nodemon ./server.js"
+},
     "dependencies": {
         "axios": "^1.10.0",
         "bcrypt": "^6.0.0",
