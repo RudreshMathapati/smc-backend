@@ -174,7 +174,7 @@ app.use("/api/conductor-bus", conductorBusRoutes);
 app.use("/api/reports", reportRoutes);
 
 // 🛰️ Socket.IO Setup
-const server = http.createServer(app);
+// const server = http.createServer(app);
 
 // const io = new SocketServer(server, {
 //     cors: {
@@ -183,30 +183,30 @@ const server = http.createServer(app);
 //         credentials: true
 //     },
 // });
-const io = new SocketServer(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-  pingTimeout: 20000,
-  pingInterval: 10000,
-  transports: ["websocket", "polling"]
-});
+// const io = new SocketServer(server, {
+//   cors: {
+//     origin: allowedOrigins,
+//     methods: ["GET", "POST"],
+//     credentials: true,
+//   },
+//   pingTimeout: 20000,
+//   pingInterval: 10000,
+//   transports: ["websocket", "polling"]
+// });
 
-io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
+// io.on("connection", (socket) => {
+//   console.log("Client connected:", socket.id);
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
+//   socket.on("disconnect", () => {
+//     console.log("Client disconnected:", socket.id);
+//   });
 
-  // 🔥 CLEANUP (IMPORTANT)
-  socket.removeAllListeners();
-});
+//   // 🔥 CLEANUP (IMPORTANT)
+//   socket.removeAllListeners();
+// });
 
 // 🚀 Start Server
-server.listen(PORT, () => {
-    connectDB();
-    console.log(`🚀 Server running on port ${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  connectDB();
+  console.log(`🚀 Server running on port ${PORT}`);
 });
