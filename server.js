@@ -183,24 +183,27 @@ const server = http.createServer(app);
 //         credentials: true
 //     },
 // });
-const io = new SocketServer(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true
-  },
-  pingTimeout: 60000,
-  pingInterval: 25000,
-});
-io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
+// const io = new SocketServer(server, {
+//   cors: {
+//     origin: allowedOrigins,
+//     methods: ["GET", "POST"],
+//     credentials: true,
+//   },
+//   pingTimeout: 20000,
+//   pingInterval: 10000,
+//   transports: ["websocket", "polling"]
+// });
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
+// io.on("connection", (socket) => {
+//   console.log("Client connected:", socket.id);
 
-  // VERY IMPORTANT → cleanup
-  socket.removeAllListeners();
-});
+//   socket.on("disconnect", () => {
+//     console.log("Client disconnected:", socket.id);
+//   });
+
+//   // 🔥 CLEANUP (IMPORTANT)
+//   socket.removeAllListeners();
+// });
 
 // 🚀 Start Server
 server.listen(PORT, () => {
