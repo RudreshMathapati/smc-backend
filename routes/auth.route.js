@@ -5,6 +5,7 @@ import {
     logoutUser,
     getCurrentUser,
     firebaseAuth,
+    changePassword,
 } from "../controllers/auth.controller.js";
 import { protect, adminOnly } from "../middleware/auth.middleware.js";
 
