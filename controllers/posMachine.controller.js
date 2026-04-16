@@ -48,11 +48,11 @@ export const createPosMachine = async (req, res) => {
 export const updatePosMachine = async (req, res) => {
   try {
     const { id } = req.params;
-    const { deviceId, model, vendor } = req.body;
+    const { name ,deviceId, model, vendor } = req.body;
 
     const updatedMachine = await PosMachine.findByIdAndUpdate(
       id,
-      { deviceId, model, vendor },
+      { name,deviceId, model, vendor },
       { new: true }
     );
 
