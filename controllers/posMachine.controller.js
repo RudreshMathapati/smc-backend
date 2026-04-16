@@ -45,15 +45,48 @@ export const createPosMachine = async (req, res) => {
 };
 
 // UPDATE existing POS machine
+// export const updatePosMachine = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { deviceId, model, vendor } = req.body;
+
+//     const updatedMachine = await PosMachine.findByIdAndUpdate(
+//       id,
+//       {deviceId, model, vendor },
+//       { new: true }
+//     );
+
+//     if (!updatedMachine) {
+//       return res.status(404).json({ message: "POS Machine not found" });
+//     }
+
+//     res.status(200).json(updatedMachine);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 export const updatePosMachine = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name ,deviceId, model, vendor } = req.body;
+    const { name, deviceId, model, vendor } = req.body;
 
+    // 1. Format the posName string from the numeric 'name' sent by frontend
+    const formattedPosName = `SMT-ETM-${String(name).padStart(3, "0")}`;
+
+    // 2. Perform the update
+    // We update 'posName' (the schema field) with our 'formattedPosName'
     const updatedMachine = await PosMachine.findByIdAndUpdate(
       id,
-      { name,deviceId, model, vendor },
-      { new: true }
+      { 
+        posName: formattedPosName, 
+        deviceId, 
+        model, 
+        vendor 
+      },
+      { 
+        new: true,           // Return the document AFTER update
+        runValidators: true  // Ensure unique/required rules are checked
+      }
     );
 
     if (!updatedMachine) {
@@ -62,6 +95,12 @@ export const updatePosMachine = async (req, res) => {
 
     res.status(200).json(updatedMachine);
   } catch (error) {
+    // Handle MongoDB Duplicate Key Error (11000)
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: "Duplicate Error: POS Name or Device ID already in use." 
+      });
+    }
     res.status(500).json({ message: error.message });
   }
 };
