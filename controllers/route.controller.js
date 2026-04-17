@@ -67,7 +67,7 @@ export const createRoute = async (req, res) => {
     if (existing) {
       return res.status(400).json({ message: "Route already exists" });
     }
-     const existing = await Route.findOne({ routeId });
+     const existingRouteID = await Route.findOne({ routeId });
 if (existing) {
   return res.status(400).json({ message: "Route ID already exists" });
 }
