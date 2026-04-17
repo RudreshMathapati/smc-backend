@@ -15,8 +15,7 @@ export const getAllRoutes = async (req, res) => {
 // ✅ Create a new Route (structured trips)
 export const createRoute = async (req, res) => {
   try {
-    let { source, destination, via, distance, estimatedDuration, trips } =
-      req.body;
+   let { routeId, source, destination, via, distance, estimatedDuration, trips } = req.body;
 
     // Basic trims
     source = source?.trim();
@@ -28,7 +27,9 @@ export const createRoute = async (req, res) => {
         .status(400)
         .json({ message: "Source and destination are required" });
     }
-
+     if (!routeId?.trim()) {
+  return res.status(400).json({ message: "Route ID is required" });
+}
     // Validate trips array
     if (!Array.isArray(trips) || trips.length === 0) {
       return res.status(400).json({ message: "At least one trip is required" });
@@ -66,8 +67,12 @@ export const createRoute = async (req, res) => {
     if (existing) {
       return res.status(400).json({ message: "Route already exists" });
     }
-
+     const existing = await Route.findOne({ routeId });
+if (existing) {
+  return res.status(400).json({ message: "Route ID already exists" });
+}
     const newRoute = new Route({
+      routeId,
       source,
       destination,
       via,
@@ -126,6 +131,7 @@ export const updateRoute = async (req, res) => {
     }
 
     let {
+      routeId,
       source,
       destination,
       via,
@@ -139,6 +145,10 @@ export const updateRoute = async (req, res) => {
     source = source?.trim();
     destination = destination?.trim();
     via = via?.trim() || "";
+     
+    if (!routeId?.trim()) {
+  return res.status(400).json({ message: "Route ID is required" });
+}
 
     if (!source || !destination) {
       return res
@@ -187,6 +197,7 @@ export const updateRoute = async (req, res) => {
 
     // ✅ Build update object
     const updateData = {
+      routeId,
       source,
       destination,
       via,

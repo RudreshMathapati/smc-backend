@@ -19,6 +19,12 @@ const routeSchema = new mongoose.Schema(
     estimatedDuration: {
       type: Number,
     },
+    routeId: {   // ✅ NEW FIELD
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
     isActive: {
       type: Boolean,
       default: true,
