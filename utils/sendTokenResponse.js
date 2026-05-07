@@ -23,18 +23,21 @@
 // };
 import jwt from "jsonwebtoken";
 
-export const sendTokenResponse = (res, user) => {
+export const sendTokenResponse = (res, user, rememberMe) => {
+  const expiresIn = rememberMe ? "30d" : "1d";
+  const maxAge = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000;
+
   const token = jwt.sign(
     { id: user._id },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn }
   );
 
   res.cookie("token", token, {
     httpOnly: true,
     secure: true,          // REQUIRED for Render/Vercel
     sameSite: "none",      // REQUIRED for cross-site
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: maxAge,
   });
 
   res.status(200).json({
@@ -42,6 +45,7 @@ export const sendTokenResponse = (res, user) => {
     user: {
       _id: user._id,
       name: user.name,
+      username: user.username,
       phone: user.phone,
       role: user.role,
     },

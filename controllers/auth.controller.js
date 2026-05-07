@@ -29,16 +29,17 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
     try {
-        const { phone, password } = req.body;
+        const { username, password, rememberMe } = req.body;
 
-        const user = await User.findOne({ phone });
+        const user = await User.findOne({ username });
         if (!user)
             return res.status(400).json({ message: "Invalid credentials" });
+
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch)
             return res.status(400).json({ message: "Invalid credentials" });
-        sendTokenResponse(res, user);
+        sendTokenResponse(res, user, rememberMe);
     } catch (err) { 
         console.log("Error in loginUser in auth.controller.js\n", err.message);
         res.status(500).json({ message: err.message });
