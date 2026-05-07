@@ -4,15 +4,12 @@ import { sendTokenResponse } from "../utils/sendTokenResponse.js";
 
 export const registerUser = async (req, res) => {
     try {
-        const { name, username, phone, password } = req.body;
-
-        // Use provided username, or fall back to name
-        const finalUsername = username || name;
+        const { username, phone, password } = req.body;
 
         const existingUser = await User.findOne({ 
             $or: [
                 { phone }, 
-                { username: { $regex: new RegExp(`^${finalUsername}$`, "i") } }
+                { username: { $regex: new RegExp(`^${username}$`, "i") } }
             ] 
         });
         if (existingUser)
@@ -20,11 +17,11 @@ export const registerUser = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({
-            name,
-            username: finalUsername,
+            username,
             phone,
             password: hashedPassword,
         });
+
 
 
         sendTokenResponse(res, user);

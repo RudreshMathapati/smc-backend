@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
     {
-        name: { type: String, required: true },
         username: {
             type: String,
             unique: true,
-            sparse: true,
+            required: true,
         },
+
 
 
         // Phone (for normal users)

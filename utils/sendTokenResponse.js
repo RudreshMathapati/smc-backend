@@ -44,7 +44,6 @@ export const sendTokenResponse = (res, user, rememberMe) => {
     success: true,
     user: {
       _id: user._id,
-      name: user.name,
       username: user.username,
       phone: user.phone,
       role: user.role,
