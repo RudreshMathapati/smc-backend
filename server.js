@@ -125,6 +125,8 @@ import gpsRoutes from "./routes/gps.route.js";
 import fareRoutes from "./routes/fareRoutes.js";
 import conductorBusRoutes from "./routes/conductorBus.route.js";
 import reportRoutes from "./routes/reports.route.js";
+import dashboardRoutes from "./routes/dashboard.route.js";
+import { startDashboardEmitter } from "./services/socket.service.js";
 
 dotenv.config();
 
@@ -151,8 +153,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // ✅ VERY IMPORTANT
 
 app.use(cookieParser());
@@ -172,6 +172,7 @@ app.use("/api/passes", pass); // 👈 NEW
 app.use("/api/gps", gpsRoutes);
 app.use("/api/conductor-bus", conductorBusRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // 🛰️ Socket.IO Setup
 const server = http.createServer(app);
@@ -204,6 +205,9 @@ io.on("connection", (socket) => {
   // 🔥 CLEANUP (IMPORTANT)
   socket.removeAllListeners();
 });
+
+// 🚀 Start Dashboard Emitter
+startDashboardEmitter(io);
 
 // 🚀 Start Server
 server.listen(PORT, () => {
