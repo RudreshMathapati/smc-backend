@@ -10,6 +10,7 @@ export const startDashboardEmitter = (io) => {
       io.emit("dashboard:update", analytics);
     } catch (err) {
       console.log("❌ Dashboard Error:", err.message);
+      io.emit("dashboard:error", { message: "Failed to fetch real-time dashboard data" });
     }
   }, 10000);
 };
