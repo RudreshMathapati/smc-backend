@@ -24,6 +24,12 @@ export const addBus = async (req, res) => {
     res.status(201).json({ message: "Bus added successfully", bus: newBus });
   } catch (error) {
     console.error("Error adding bus:", error);
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        message: `Bus with this ${field} already exists.`,
+      });
+    }
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -63,7 +69,7 @@ export const updateBus = async (req, res) => {
     const updatedBus = await Bus.findByIdAndUpdate(
       req.params.id,
       { busNumber, type, capacity, registrationNumber, status },
-      { new: true }
+      { new: true, runValidators: true }
     );
 
     if (!updatedBus) {
@@ -75,6 +81,12 @@ export const updateBus = async (req, res) => {
       .json({ message: "Bus updated successfully", bus: updatedBus });
   } catch (error) {
     console.error("Error updating bus:", error);
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        message: `Bus with this ${field} already exists.`,
+      });
+    }
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -9,7 +9,7 @@ const busSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Petrol", "EV"],
+      enum: ["Petrol", "EV", "Diesel", "Hybrid"],
       required: true,
     },
     capacity: {
