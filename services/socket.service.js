@@ -1,3 +1,4 @@
+// services/socket.service.js
 import { getDashboardAnalytics } from "../controllers/dashboard.controller.js";
 
 export const startDashboardEmitter = (io) => {

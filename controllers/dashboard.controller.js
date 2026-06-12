@@ -1,3 +1,4 @@
+// controllers/dashboard.controller.js
 import GPS from "../models/gps.model.js";
 import Bus from "../models/bus.model.js";
 import Route from "../models/route.model.js";
@@ -55,15 +56,15 @@ export const getDashboardAnalytics = async () => {
         runningBuses,
         idleBuses,
         breakdownBuses,
-        tripsRunningNow: 10,
-        tripsCompletedToday: 25,
+        tripsRunningNow: 0,
+        tripsCompletedToday: 0,
       },
       revenue: {
-        collectionToday: 25000,
-        collectionThisWeek: 98000,
-        collectionThisMonth: 320000,
-        ticketRevenue: 27000,
-        passRevenue: 50000,
+        collectionToday: 0,
+        collectionThisWeek: 0,
+        collectionThisMonth: 0,
+        ticketRevenue: 0,
+        passRevenue: 0,
       },
       stats: {
         buses: totalBuses,
