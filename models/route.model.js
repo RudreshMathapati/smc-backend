@@ -75,6 +75,7 @@ const routeSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    collection: "routes",
   }
 );
 

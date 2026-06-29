@@ -26,6 +26,7 @@ const posMachineSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    collection: "posmachines",
   }
 );
 

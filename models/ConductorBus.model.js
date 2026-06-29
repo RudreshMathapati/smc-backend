@@ -20,9 +20,24 @@ const conductorBusSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    driverId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Driver",
+      required: false,
+    },
+    driver_batch_no: {
+      type: String,
+      required: false,
+    },
     assignedDate: {
       type: String,
       required: true,
+    },
+    shift: {
+      type: String,
+      enum: ["Morning", "Evening"],
+      required: true,
+      default: "Morning",
     },
     isActive: {
       type: Boolean,

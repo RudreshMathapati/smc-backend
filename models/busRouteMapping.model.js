@@ -92,6 +92,7 @@ const busRouteSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    collection: "busroutes",
   }
 );
 

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const BusSchema = new mongoose.Schema(
+const stopPriceSchema = new mongoose.Schema(
   {
     boardingStop: {
       type: String,
@@ -23,10 +23,9 @@ const BusSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { timestamps: true },
-  { collection: "stopPrices" }
+  { timestamps: true, collection: "stopprices" }
 );
 
-const stopPrice = mongoose.model("StopPrice", BusSchema);
+const stopPrice = mongoose.model("StopPrice", stopPriceSchema);
 
 export default stopPrice;

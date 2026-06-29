@@ -19,7 +19,7 @@ const passSchema = new mongoose.Schema(
       trim: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "passes" }
 );
 
 const Pass = mongoose.model("Pass", passSchema);

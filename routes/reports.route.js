@@ -29,11 +29,11 @@ router.get("/conductor", async (req, res) => {
     const busId = conductorBus.busId;
 
     // 2. Get Route assigned to bus
-    const busRoute = await BusRoute.findOne({ busId }).populate("routeId");
+    const busRoute = await BusRoute.findOne({ bus: busId }).populate("route");
 
     let routeName = "";
-    if (busRoute && busRoute.routeId) {
-      routeName = `${busRoute.routeId.source} → ${busRoute.routeId.destination}`;
+    if (busRoute && busRoute.route) {
+      routeName = `${busRoute.route.source} → ${busRoute.route.destination}`;
     }
 
     // 3. Get Tickets directly from collection

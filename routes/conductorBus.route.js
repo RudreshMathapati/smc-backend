@@ -3,11 +3,15 @@ import ConductorBus from "../models/ConductorBus.model.js";
 
 const router = express.Router();
 
-// Assign bus to conductor
+// Assign bus to conductor and driver
 router.post("/", async (req, res) => {
   try {
-    const { busId, assignedbusNumber, conductorId, batch_no, assignedDate } =
+    const { busId, assignedbusNumber, conductorId, batch_no, driverId, driver_batch_no, assignedDate, shift } =
       req.body;
+
+    if (!shift || !["Morning", "Evening"].includes(shift)) {
+      return res.status(400).json({ message: "A valid shift (Morning or Evening) is required" });
+    }
 
     const busExists = await ConductorBus.findOne({
       busId,
@@ -16,7 +20,7 @@ router.post("/", async (req, res) => {
 
     if (busExists) {
       return res.status(400).json({
-        message: "This bus is already assigned to another conductor",
+        message: "This bus is already assigned to another conductor/driver",
       });
     }
 
@@ -31,17 +35,33 @@ router.post("/", async (req, res) => {
       });
     }
 
+    if (driverId) {
+      const driverExists = await ConductorBus.findOne({
+        driverId,
+        isActive: true,
+      });
+
+      if (driverExists) {
+        return res.status(400).json({
+          message: "This driver already has a bus assigned",
+        });
+      }
+    }
+
     const newAssign = new ConductorBus({
       busId,
       assignedbusNumber,
       conductorId,
       batch_no,
+      driverId,
+      driver_batch_no,
       assignedDate,
+      shift,
     });
 
     await newAssign.save();
 
-    res.json({ message: "Bus assigned to conductor successfully" });
+    res.json({ message: "Bus assigned successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }
@@ -51,7 +71,8 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   const data = await ConductorBus.find({ isActive: true })
     .populate("busId")
-    .populate("conductorId");
+    .populate("conductorId")
+    .populate("driverId");
 
   res.json(data);
 });
@@ -59,7 +80,7 @@ router.get("/", async (req, res) => {
 // ✅ UPDATE assignment
 router.put("/:id", async (req, res) => {
   try {
-    const { busId, assignedbusNumber, conductorId, batch_no } = req.body;
+    const { busId, assignedbusNumber, conductorId, batch_no, driverId, driver_batch_no, shift } = req.body;
 
     const updated = await ConductorBus.findByIdAndUpdate(
       req.params.id,
@@ -68,6 +89,9 @@ router.put("/:id", async (req, res) => {
         assignedbusNumber,
         conductorId,
         batch_no,
+        driverId,
+        driver_batch_no,
+        ...(shift && { shift }),
       },
       { new: true },
     );

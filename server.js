@@ -118,6 +118,7 @@ import PosMachine from "./routes/pos.route.js";
 import busPosMapping from "./routes/busPosMapping.route.js";
 import authRoutes from "./routes/auth.route.js";
 import conductorRoutes from "./routes/conductors.route.js"; // 👈 NEW
+import driverRoutes from "./routes/drivers.route.js";
 import connectDB from "./utils/connectDB.js";
 import stopPriceRoutes from "./routes/stopPrice.route.js"; // 👈 NEW
 import pass from "./routes/pass.route.js"; // 👈 NEW
@@ -126,6 +127,9 @@ import fareRoutes from "./routes/fareRoutes.js";
 import conductorBusRoutes from "./routes/conductorBus.route.js";
 import reportRoutes from "./routes/reports.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
+import routeMasterRoutes from "./routes/routeMaster.route.js";
+import stopMasterRoutes from "./routes/stopMaster.route.js";
+import shiftRoutes from "./routes/shiftAssignment.route.js";
 import { startDashboardEmitter } from "./services/socket.service.js";
 
 dotenv.config();
@@ -140,16 +144,16 @@ const allowedOrigins = [
   "http://localhost:3000",
 ];
 const corsOptions = {
-    origin: function (origin, callback) {
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(null, true);
-        }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
@@ -167,12 +171,16 @@ app.use("/api/pos-machines", PosMachine);
 app.use("/api/bus-pos-mapping", busPosMapping);
 app.use("/api/auth", authRoutes);
 app.use("/api/conductors", conductorRoutes); // 👈 NEW
+app.use("/api/drivers", driverRoutes);
 app.use("/api/stop-prices", stopPriceRoutes); // 👈 NEW
 app.use("/api/passes", pass); // 👈 NEW
 app.use("/api/gps", gpsRoutes);
 app.use("/api/conductor-bus", conductorBusRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/route-master", routeMasterRoutes);
+app.use("/api/stop-master", stopMasterRoutes);
+app.use("/api/shifts", shiftRoutes);
 
 // 🛰️ Socket.IO Setup
 const server = http.createServer(app);
@@ -211,6 +219,6 @@ startDashboardEmitter(io);
 
 // 🚀 Start Server
 server.listen(PORT, () => {
-    connectDB();
-    console.log(`🚀 Server running on port ${PORT}`);
+  connectDB();
+  console.log(`🚀 Server running on port ${PORT}`);
 });

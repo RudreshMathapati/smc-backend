@@ -14,7 +14,7 @@ const conductorSchema = new mongoose.Schema(
       default: "Temporary", // default if not selected
     },
   },
-  { collection: "Conductor" }
+  { collection: "Conductor", timestamps: true }
 );
 
 const Conductor = mongoose.model("Conductor", conductorSchema);

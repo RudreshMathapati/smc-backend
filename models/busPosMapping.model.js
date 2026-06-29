@@ -19,8 +19,8 @@ const busPOSSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "buspos" }
 );
 
-const BusPOS =  mongoose.model("BusPOS", busPOSSchema);
+const BusPOS = mongoose.model("BusPOS", busPOSSchema);
 export default BusPOS;
