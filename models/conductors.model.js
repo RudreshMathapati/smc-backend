@@ -13,6 +13,7 @@ const conductorSchema = new mongoose.Schema(
       required: true,
       default: "Temporary", // default if not selected
     },
+    phone_no: { type: String },
   },
   { collection: "Conductor", timestamps: true }
 );

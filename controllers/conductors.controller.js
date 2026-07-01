@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 // Register Conductor
 export const registerConductor = async (req, res) => {
   try {
-    const { name, batch_no, password, type } = req.body;
+    const { name, batch_no, password, type, phone_no } = req.body;
 
     // Check if conductor already exists
     const existingConductor = await Conductor.findOne({ batch_no });
@@ -21,6 +21,7 @@ export const registerConductor = async (req, res) => {
       batch_no,
       password: hashedPassword,
       type, // save Permanent / Temporary
+      phone_no,
     });
 
     await newConductor.save();
@@ -87,8 +88,8 @@ export const getConductorById = async (req, res) => {
 // Update Conductor
 export const updateConductor = async (req, res) => {
   try {
-    const { name, password, type } = req.body;
-    let updatedData = { name, type };
+    const { name, password, type, phone_no } = req.body;
+    let updatedData = { name, type, phone_no };
 
     if (password) {
       updatedData.password = await bcrypt.hash(password, 10);

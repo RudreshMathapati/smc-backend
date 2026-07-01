@@ -26,6 +26,15 @@ const busSchema = new mongoose.Schema(
       enum: ["Active", "Under Maintenance", "Offline"],
       default: "Active",
     },
+    chassisNumber: {
+      type: String,
+    },
+    classOfVehicle: {
+      type: String,
+    },
+    registrationMonthYear: {
+      type: String,
+    },
   },
   { timestamps: true, collection: "buses" }
 );
