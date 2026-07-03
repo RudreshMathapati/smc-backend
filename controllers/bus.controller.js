@@ -5,7 +5,7 @@ import Bus from "../models/bus.model.js";
 // Add bus
 export const addBus = async (req, res) => {
   try {
-    const { busNumber, type, capacity, registrationNumber, status, chassisNumber, classOfVehicle, registrationMonthYear } = req.body;
+    const { busNumber, type, capacity, registrationNumber, status, chassisNumber, makersName } = req.body;
 
     // Validate input
     if (!busNumber || !type || !capacity || !registrationNumber || !status) {
@@ -19,8 +19,7 @@ export const addBus = async (req, res) => {
       registrationNumber,
       status,
       chassisNumber,
-      classOfVehicle,
-      registrationMonthYear,
+      makersName,
     });
 
     await newBus.save();
@@ -67,11 +66,11 @@ export const deleteBus = async (req, res) => {
 // Optional: Update a bus
 export const updateBus = async (req, res) => {
   try {
-    const { busNumber, type, capacity, registrationNumber, status, chassisNumber, classOfVehicle, registrationMonthYear } = req.body;
+    const { busNumber, type, capacity, registrationNumber, status, chassisNumber, makersName } = req.body;
 
     const updatedBus = await Bus.findByIdAndUpdate(
       req.params.id,
-      { busNumber, type, capacity, registrationNumber, status, chassisNumber, classOfVehicle, registrationMonthYear },
+      { busNumber, type, capacity, registrationNumber, status, chassisNumber, makersName },
       { new: true, runValidators: true }
     );
 

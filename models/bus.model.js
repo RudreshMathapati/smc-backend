@@ -29,10 +29,7 @@ const busSchema = new mongoose.Schema(
     chassisNumber: {
       type: String,
     },
-    classOfVehicle: {
-      type: String,
-    },
-    registrationMonthYear: {
+    makersName: {
       type: String,
     },
   },

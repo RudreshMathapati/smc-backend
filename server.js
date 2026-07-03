@@ -131,6 +131,8 @@ import routeMasterRoutes from "./routes/routeMaster.route.js";
 import stopMasterRoutes from "./routes/stopMaster.route.js";
 import shiftRoutes from "./routes/shiftAssignment.route.js";
 import { startDashboardEmitter } from "./services/socket.service.js";
+import conductorAuthRoutes from "./routes/conductorAuth.route.js"; // 🆕 POS Issue App
+import posIssueRoutes from "./routes/posIssue.route.js"; // 🆕 POS Issue App
 
 dotenv.config();
 
@@ -181,6 +183,8 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/route-master", routeMasterRoutes);
 app.use("/api/stop-master", stopMasterRoutes);
 app.use("/api/shifts", shiftRoutes);
+app.use("/api/conductor-auth", conductorAuthRoutes); // 🆕 POS Issue App - Conductor login
+app.use("/api/pos-issues", posIssueRoutes); // 🆕 POS Issue App - Issue management
 
 // 🛰️ Socket.IO Setup
 const server = http.createServer(app);
