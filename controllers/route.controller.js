@@ -1,10 +1,11 @@
 // path = version2Admin/Backend/controllers/route.controller.js
 import Route from "../models/route.model.js";
+import BusRoute from "../models/busRouteMapping.model.js";
 
 // ✅ Get all routes
 export const getAllRoutes = async (req, res) => {
   try {
-    const routes = await Route.find().sort({ createdAt: -1 }); // Newest first
+    const routes = await Route.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 }); // Newest first
     res.status(200).json(routes);
   } catch (error) {
     console.error("Failed to fetch routes:", error);
@@ -97,10 +98,26 @@ export const deleteRoute = async (req, res) => {
       return res.status(400).json({ message: "Invalid route ID format" });
     }
 
-    const route = await Route.findByIdAndDelete(id);
+    const route = await Route.findById(id);
     if (!route) {
       return res.status(404).json({ message: "Route not found" });
     }
+
+    if (route.isDeleted) {
+      return res.status(400).json({ message: "Route is already deleted" });
+    }
+
+    // Step 1: Soft-delete the route record
+    route.isDeleted = true;
+    route.routeId = `${route.routeId}_deleted_${Date.now()}`;
+    await route.save();
+
+    // Step 2: Soft-delete all bus-route mappings referencing this route
+    // (prevents orphaned mappings showing in admin panel and daily reports)
+    await BusRoute.updateMany(
+      { route: route._id, isDeleted: { $ne: true } },
+      { isDeleted: true }
+    );
 
     res.status(200).json({ message: "✅ Route deleted", deletedRoute: route });
   } catch (error) {
@@ -112,7 +129,7 @@ export const deleteRoute = async (req, res) => {
 // ✅ Get unique source and destination for dropdowns
 export const getUniqueStops = async (req, res) => {
   try {
-    const routes = await Route.find();
+    const routes = await Route.find({ isDeleted: { $ne: true } });
     const sources = [...new Set(routes.map((r) => r.source.trim()))];
     const destinations = [...new Set(routes.map((r) => r.destination.trim()))];
     res.status(200).json({ sources, destinations });

@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getAllPosMachines,
+  getPosBySerial,
   createPosMachine,
   updatePosMachine,
   deletePosMachine,
@@ -10,6 +11,10 @@ const router = express.Router();
 
 // Route to get all POS machines
 router.get("/", getAllPosMachines);
+
+// Route to search POS machine by serial number / pos name
+router.get("/serial/:serial", getPosBySerial);
+
 
 // Route to create a new POS machine
 router.post("/", createPosMachine);

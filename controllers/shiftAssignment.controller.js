@@ -1,4 +1,5 @@
 import ShiftAssignment from "../models/shiftAssignment.model.js";
+import ShiftAssignmentHistory from "../models/shiftAssignmentHistory.model.js";
 import ConductorBus from "../models/ConductorBus.model.js";
 import Conductor from "../models/conductors.model.js";
 import Driver from "../models/drivers.model.js";
@@ -23,18 +24,18 @@ export const assignShift = async (req, res) => {
         .json({ message: "personType must be 'Conductor' or 'Driver'" });
     }
 
-    if (!["Morning", "Evening"].includes(shift)) {
+    if (!["Morning", "Evening", "General"].includes(shift)) {
       return res
         .status(400)
-        .json({ message: "shift must be 'Morning' or 'Evening'" });
+        .json({ message: "shift must be 'Morning', 'Evening', or 'General'" });
     }
 
-    // Verify the person exists in the DB
+    // Verify the person exists in the DB and is active
     let person;
     if (personType === "Conductor") {
-      person = await Conductor.findById(personId).select("name batch_no");
+      person = await Conductor.findOne({ _id: personId, isDeleted: { $ne: true } }).select("name batch_no");
     } else {
-      person = await Driver.findById(personId).select("name batch_no");
+      person = await Driver.findOne({ _id: personId, isDeleted: { $ne: true } }).select("name batch_no");
     }
 
     if (!person) {
@@ -75,8 +76,8 @@ export const bulkAssignShift = async (req, res) => {
   try {
     const { shift, conductorIds = [], driverIds = [] } = req.body;
 
-    if (!shift || !["Morning", "Evening"].includes(shift)) {
-      return res.status(400).json({ message: "Valid shift (Morning or Evening) is required" });
+    if (!shift || !["Morning", "Evening", "General"].includes(shift)) {
+      return res.status(400).json({ message: "Valid shift (Morning, Evening, or General) is required" });
     }
 
     if (conductorIds.length === 0 && driverIds.length === 0) {
@@ -86,10 +87,10 @@ export const bulkAssignShift = async (req, res) => {
     // Fetch all selected conductors and drivers in parallel
     const [selectedConductors, selectedDrivers] = await Promise.all([
       conductorIds.length > 0
-        ? Conductor.find({ _id: { $in: conductorIds } }).select("name batch_no")
+        ? Conductor.find({ _id: { $in: conductorIds }, isDeleted: { $ne: true } }).select("name batch_no")
         : Promise.resolve([]),
       driverIds.length > 0
-        ? Driver.find({ _id: { $in: driverIds } }).select("name batch_no")
+        ? Driver.find({ _id: { $in: driverIds }, isDeleted: { $ne: true } }).select("name batch_no")
         : Promise.resolve([]),
     ]);
 
@@ -147,7 +148,7 @@ export const bulkAssignShift = async (req, res) => {
 export const getShiftAssignments = async (req, res) => {
   try {
     const { shift } = req.query;
-    const filter = shift ? { shift } : {};
+    const filter = shift ? { shift, isDeleted: { $ne: true } } : { isDeleted: { $ne: true } };
 
     const assignments = await ShiftAssignment.find(filter).sort({
       shift: 1,
@@ -171,19 +172,25 @@ export const getAvailableForShift = async (req, res) => {
   try {
     const { shift } = req.query;
 
-    if (!shift || !["Morning", "Evening"].includes(shift)) {
+    if (!shift || !["Morning", "Evening", "General"].includes(shift)) {
       return res
         .status(400)
-        .json({ message: "Query param 'shift' must be 'Morning' or 'Evening'" });
+        .json({ message: "Query param 'shift' must be 'Morning', 'Evening', or 'General'" });
     }
 
-    // 1. All people assigned to this shift
-    const shiftAssignments = await ShiftAssignment.find({ shift });
+    // 1. All people assigned to this shift (exclude soft-deleted entries)
+    const shiftAssignments = await ShiftAssignment.find({ shift, isDeleted: { $ne: true } });
 
-    // 2. All currently active bus assignments (conductor_bus where isActive=true)
-    const activeBusAssignments = await ConductorBus.find({ isActive: true });
+    // 2. Active bus assignments for today in the CURRENT shift only
+    //    (a person already on a bus in this shift is truly "busy" for this shift)
+    const todayStr = new Date().toISOString().split("T")[0];
+    const activeBusAssignments = await ConductorBus.find({
+      assignedDate: todayStr,
+      shift,
+      isActive: true,
+    });
 
-    // Build sets of IDs that are already busy
+    // Build sets of IDs that are busy in the CURRENT shift
     const busyConductorIds = new Set(
       activeBusAssignments
         .map((a) => a.conductorId?.toString())
@@ -195,7 +202,7 @@ export const getAvailableForShift = async (req, res) => {
         .filter(Boolean)
     );
 
-    // 3. Filter: in the shift AND not currently assigned to a bus
+    // 3. Filter: in the shift AND not currently assigned to a bus in this shift
     const conductors = shiftAssignments
       .filter(
         (a) =>
@@ -237,19 +244,88 @@ export const removeShiftAssignment = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleted = await ShiftAssignment.findByIdAndDelete(id);
+    const assignment = await ShiftAssignment.findById(id);
 
-    if (!deleted) {
+    if (!assignment) {
       return res
         .status(404)
         .json({ message: "Shift assignment not found" });
     }
 
+    // Soft delete — preserve for audit trail / history
+    assignment.isDeleted = true;
+    await assignment.save();
+
     res
       .status(200)
-      .json({ message: "Removed from shift successfully", data: deleted });
+      .json({ message: "Removed from shift successfully", data: assignment });
   } catch (error) {
     console.error("Error removing shift assignment:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ─────────────────────────────────────────────
+// DELETE /api/shifts/reset/:shift
+// Archive ALL assignments for a shift to history, then clear them
+// This preserves a dated record before the admin starts fresh
+// ─────────────────────────────────────────────
+export const resetShift = async (req, res) => {
+  try {
+    const { shift } = req.params;
+
+    if (!["Morning", "Evening", "General"].includes(shift)) {
+      return res
+        .status(400)
+        .json({ message: "shift must be 'Morning', 'Evening', or 'General'" });
+    }
+
+    // 1. Read all active assignments for this shift
+    const activeAssignments = await ShiftAssignment.find({ shift, isDeleted: { $ne: true } });
+
+    if (activeAssignments.length === 0) {
+      return res
+        .status(400)
+        .json({ message: `No active assignments found for ${shift} shift` });
+    }
+
+    const now = new Date();
+
+    // Normalize date to midnight UTC for the date field (for easy daily querying)
+    const dateOnly = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    );
+
+    // 2. Build the history snapshot
+    const historyDoc = new ShiftAssignmentHistory({
+      date: dateOnly,
+      shift,
+      assignments: activeAssignments.map((a) => ({
+        personId: a.personId,
+        personType: a.personType,
+        batch_no: a.batch_no,
+        name: a.name,
+        assignedAt: a.createdAt,
+      })),
+      totalCount: activeAssignments.length,
+      resetAt: now,
+    });
+
+    // 3. Save history first — if this fails, do NOT delete active assignments
+    await historyDoc.save();
+
+    // 4. Soft-delete all active assignments for this shift (preserves history in DB)
+    await ShiftAssignment.updateMany({ shift, isDeleted: { $ne: true } }, { $set: { isDeleted: true } });
+
+    res.status(200).json({
+      message: `${shift} shift archived and cleared successfully`,
+      archived: activeAssignments.length,
+      shift,
+      date: dateOnly,
+      historyId: historyDoc._id,
+    });
+  } catch (error) {
+    console.error("Error resetting shift:", error);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -22,6 +22,11 @@ const stopPriceSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    // Soft delete — preserves fare history when a stop-price entry is removed
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true, collection: "stopprices" }
 );

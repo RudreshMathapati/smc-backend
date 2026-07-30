@@ -32,6 +32,10 @@ const busSchema = new mongoose.Schema(
     makersName: {
       type: String,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true, collection: "buses" }
 );

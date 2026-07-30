@@ -99,21 +99,56 @@
 //   }
 // };
 import PosMachine from "../models/posMachine.model.js";
+import BusPOS from "../models/busPosMapping.model.js";
 
 // GET all POS machines
 export const getAllPosMachines = async (req, res) => {
   try {
-    const machines = await PosMachine.find();
+    const machines = await PosMachine.find({ isDeleted: { $ne: true } });
     res.status(200).json(machines);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
+// GET POS machine by serial number or name
+export const getPosBySerial = async (req, res) => {
+  try {
+    const { serial } = req.params;
+    if (!serial) {
+      return res.status(400).json({ message: "Serial number is required" });
+    }
+
+    const trimmed = serial.trim();
+    const machine = await PosMachine.findOne({
+      isDeleted: { $ne: true },
+      $or: [
+        { serialNumber: trimmed },
+        { posName: trimmed },
+        { deviceId: trimmed },
+      ],
+    });
+
+    if (!machine) {
+      return res.status(404).json({ message: "POS machine not found" });
+    }
+
+    res.status(200).json({
+      posMachineId: machine._id,
+      posName: machine.posName,
+      deviceId: machine.deviceId,
+      serialNumber: machine.serialNumber,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 // CREATE POS Machine
 export const createPosMachine = async (req, res) => {
   try {
-    const { name, deviceId, model, vendor } = req.body;
+    const { name, deviceId, model, vendor, serialNumber } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: "POS name is required" });
@@ -130,6 +165,7 @@ export const createPosMachine = async (req, res) => {
       deviceId,
       model,
       vendor,
+      serialNumber,
     });
 
     await newPos.save();
@@ -144,7 +180,7 @@ export const createPosMachine = async (req, res) => {
 export const updatePosMachine = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, deviceId, model, vendor } = req.body;
+    const { name, deviceId, model, vendor, serialNumber } = req.body;
 
     const updatedMachine = await PosMachine.findByIdAndUpdate(
       id,
@@ -153,6 +189,7 @@ export const updatePosMachine = async (req, res) => {
         deviceId,
         model,
         vendor,
+        serialNumber,
       },
       {
         new: true,
@@ -179,11 +216,28 @@ export const updatePosMachine = async (req, res) => {
 export const deletePosMachine = async (req, res) => {
   try {
     const { id } = req.params;
+    const machine = await PosMachine.findById(id);
 
-    const deleted = await PosMachine.findByIdAndDelete(id);
-    if (!deleted) {
+    if (!machine) {
       return res.status(404).json({ message: "POS Machine not found" });
     }
+
+    if (machine.isDeleted) {
+      return res.status(400).json({ message: "POS Machine is already deleted" });
+    }
+
+    // Step 1: Soft-delete the POS machine
+    machine.isDeleted = true;
+    const suffix = `_del_${Date.now()}`;
+    machine.posName = `${machine.posName}${suffix}`;
+    machine.deviceId = `${machine.deviceId}${suffix}`;
+    await machine.save();
+
+    // Step 2: Soft-delete bus-POS mapping for this machine
+    await BusPOS.updateMany(
+      { posMachine: machine._id, isDeleted: { $ne: true } },
+      { isDeleted: true }
+    );
 
     res.status(200).json({ message: "POS Machine deleted successfully" });
   } catch (error) {

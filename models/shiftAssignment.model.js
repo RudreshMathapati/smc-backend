@@ -24,8 +24,13 @@ const shiftAssignmentSchema = new mongoose.Schema(
     },
     shift: {
       type: String,
-      enum: ["Morning", "Evening"],
+      enum: ["Morning", "Evening", "General"],
       required: true,
+    },
+    // Soft delete — preserves shift history for audit trail
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   {
@@ -35,8 +40,14 @@ const shiftAssignmentSchema = new mongoose.Schema(
 );
 
 // Compound unique index: one person can only be assigned to the same shift once
-// (they CAN appear in both Morning AND Evening — that's allowed)
-shiftAssignmentSchema.index({ personId: 1, shift: 1 }, { unique: true });
+// (they CAN appear in Morning, Evening, AND General — that's allowed)
+shiftAssignmentSchema.index(
+  { personId: 1, shift: 1 },
+  { 
+    unique: true, 
+    partialFilterExpression: { isDeleted: false } 
+  }
+);
 
 const ShiftAssignment = mongoose.model("ShiftAssignment", shiftAssignmentSchema);
 

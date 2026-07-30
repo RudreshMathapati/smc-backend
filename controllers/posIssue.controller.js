@@ -3,19 +3,16 @@ import ConductorBus from "../models/ConductorBus.model.js";
 import BusPOS from "../models/busPosMapping.model.js";
 import Bus from "../models/bus.model.js";
 import PosMachine from "../models/posMachine.model.js";
-import Conductor from "../models/conductors.model.js";
 
 /**
  * POST /api/pos-issues/raise
  * Conductor raises a new POS issue.
- * Conductor identity + bus + POS are resolved automatically from the token and DB mappings.
  */
 export const raiseIssue = async (req, res) => {
   try {
     const conductor = req.conductor; // set by conductorProtect middleware
     const { issueType, description } = req.body;
 
-    // Validate input
     const validIssueTypes = [
       "POS Not Turning On",
       "Battery Issue",
@@ -30,54 +27,58 @@ export const raiseIssue = async (req, res) => {
       });
     }
 
-    if (!description || description.trim().length < 5) {
-      return res.status(400).json({
-        message: "Description must be at least 5 characters.",
-      });
-    }
+    const dt = new Date();
+    const istDate = new Date(dt.getTime() + 5.5 * 60 * 60 * 1000);
+    const todayStr =
+      `${istDate.getUTCFullYear()}-` +
+      `${String(istDate.getUTCMonth() + 1).padStart(2, "0")}-` +
+      `${String(istDate.getUTCDate()).padStart(2, "0")}`;
 
-    // 1. Find the active bus assignment for this conductor
-    const assignment = await ConductorBus.findOne({
-      conductorId: conductor._id,
+    // Find active bus assignment for today
+    let assignment = await ConductorBus.findOne({
+      $or: [{ conductorId: conductor._id }, { batch_no: String(conductor.batch_no) }],
+      assignedDate: todayStr,
       isActive: true,
     }).populate("busId");
 
     if (!assignment || !assignment.busId) {
+      assignment = await ConductorBus.findOne({
+        $or: [{ conductorId: conductor._id }, { batch_no: String(conductor.batch_no) }],
+        isActive: true,
+      }).populate("busId");
+    }
+
+    if (!assignment || !assignment.busId) {
       return res.status(404).json({
-        message:
-          "No active bus assignment found for your account. Please contact admin.",
+        message: "No active bus assignment found for your account. Please contact admin.",
       });
     }
 
-    // 2. Find the POS machine mapped to that bus
-    const busPos = await BusPOS.findOne({
-      bus: assignment.busId._id,
-    }).populate("posMachine");
-
-    if (!busPos || !busPos.posMachine) {
-      return res.status(404).json({
-        message:
-          "No POS machine mapped to your assigned bus. Please contact admin.",
-      });
+    // Resolve POS machine
+    let posMachine = null;
+    const busPos = await BusPOS.findOne({ bus: assignment.busId._id }).populate("posMachine");
+    if (busPos && busPos.posMachine) {
+      posMachine = busPos.posMachine;
+    } else {
+      const posDoc = await PosMachine.findOne({ isDeleted: { $ne: true } });
+      posMachine = posDoc || { _id: assignment.busId._id, posName: "POS Device", deviceId: "UNKNOWN" };
     }
 
-    // 3. Create the issue
-    const pos = busPos.posMachine;
     const resolvedPosName =
-      pos.posName && pos.posName !== "undefined"
-        ? pos.posName
-        : pos.deviceId || "Unknown POS";
+      posMachine.posName && posMachine.posName !== "undefined"
+        ? posMachine.posName
+        : posMachine.deviceId || "Unknown POS";
 
     const issue = await PosIssue.create({
       conductorId: conductor._id,
       conductorName: conductor.name,
       batch_no: conductor.batch_no,
       busId: assignment.busId._id,
-      busNumber: assignment.busId.busNumber,
-      posMachineId: pos._id,
+      busNumber: assignment.assignedbusNumber || assignment.busId.busNumber,
+      posMachineId: posMachine._id,
       posName: resolvedPosName,
       issueType,
-      description: description.trim(),
+      description: (description || "").trim(),
       status: "Open",
     });
 
@@ -94,7 +95,6 @@ export const raiseIssue = async (req, res) => {
 
 /**
  * GET /api/pos-issues/my
- * Returns all issues raised by the currently logged-in conductor.
  */
 export const getMyIssues = async (req, res) => {
   try {
@@ -102,7 +102,7 @@ export const getMyIssues = async (req, res) => {
 
     const issues = await PosIssue.find({
       conductorId: conductor._id,
-    }).sort({ createdAt: -1 }); // newest first
+    }).sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
@@ -117,8 +117,6 @@ export const getMyIssues = async (req, res) => {
 
 /**
  * GET /api/pos-issues/all
- * Admin: Returns all issues with optional filters.
- * Query params: status, conductorId, busNumber, startDate, endDate
  */
 export const getAllIssues = async (req, res) => {
   try {
@@ -158,7 +156,6 @@ export const getAllIssues = async (req, res) => {
 
 /**
  * PATCH /api/pos-issues/:id/status
- * Admin: Update the status of an issue and optionally add a note.
  */
 export const updateIssueStatus = async (req, res) => {
   try {

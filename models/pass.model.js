@@ -18,6 +18,11 @@ const passSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    // Soft delete — preserves pass history when a pass type is removed
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true, collection: "passes" }
 );

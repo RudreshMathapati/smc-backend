@@ -28,14 +28,14 @@ export const conductorProtect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const conductor = await Conductor.findById(decoded.conductorId).select(
+    const conductor = await Conductor.findOne({ _id: decoded.conductorId, isDeleted: { $ne: true } }).select(
       "-password"
     );
 
     if (!conductor) {
       return res
         .status(401)
-        .json({ message: "Conductor not found. Please log in again." });
+        .json({ message: "Conductor not found or is inactive. Please log in again." });
     }
 
     req.conductor = conductor;

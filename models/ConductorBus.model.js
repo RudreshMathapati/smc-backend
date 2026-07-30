@@ -35,9 +35,15 @@ const conductorBusSchema = new mongoose.Schema(
     },
     shift: {
       type: String,
-      enum: ["Morning", "Evening"],
+      enum: ["Morning", "Evening", "General"],
       required: true,
       default: "Morning",
+    },
+    personalAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 50,
     },
     isActive: {
       type: Boolean,

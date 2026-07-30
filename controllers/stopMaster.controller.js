@@ -32,7 +32,7 @@ export const createStop = async (req, res) => {
 // Get all stops
 export const getAllStops = async (req, res) => {
   try {
-    const stops = await StopMaster.find().sort({ name: 1 });
+    const stops = await StopMaster.find({ isDeleted: { $ne: true } }).sort({ name: 1 });
     res.status(200).json(stops);
   } catch (error) {
     console.error("Error fetching stops:", error);
@@ -77,13 +77,21 @@ export const updateStop = async (req, res) => {
 export const deleteStop = async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await StopMaster.findByIdAndDelete(id);
+    const stop = await StopMaster.findById(id);
 
-    if (!deleted) {
+    if (!stop) {
       return res.status(404).json({ message: "Stop not found" });
     }
 
-    res.status(200).json({ message: "Stop deleted", data: deleted });
+    if (stop.isDeleted) {
+      return res.status(400).json({ message: "Stop is already deleted" });
+    }
+
+    stop.isDeleted = true;
+    stop.name = `${stop.name}_deleted_${Date.now()}`;
+    await stop.save();
+
+    res.status(200).json({ message: "Stop deleted", data: stop });
   } catch (error) {
     console.error("Error deleting stop:", error);
     res.status(500).json({ message: "Server error" });

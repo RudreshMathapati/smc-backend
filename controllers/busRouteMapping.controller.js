@@ -155,8 +155,9 @@ export const createBusRoute = async (req, res) => {
 // Get all bus-route mappings
 export const getAllBusRoutes = async (req, res) => {
   try {
-    const mappings = await BusRoute.find().populate("bus").populate("route");
-    res.status(200).json(mappings);
+    const mappings = await BusRoute.find({ isDeleted: { $ne: true } }).populate("bus").populate("route");
+    const filtered = mappings.filter(m => m.bus && !m.bus.isDeleted && m.route && !m.route.isDeleted);
+    res.status(200).json(filtered);
   } catch (error) {
     console.error("Error fetching bus route mappings:", error);
     res.status(500).json({ message: "Failed to fetch mappings" });
@@ -168,7 +169,7 @@ export const getBusRouteById = async (req, res) => {
   try {
     const { id } = req.params;
     const busRouteId = new mongoose.Types.ObjectId(id);
-    const mapping = await BusRoute.findOne({ _id: busRouteId })
+    const mapping = await BusRoute.findOne({ _id: busRouteId, isDeleted: { $ne: true } })
       .populate("bus")
       .populate("route");
 
@@ -199,8 +200,8 @@ export const updateBusRoute = async (req, res) => {
         .json({ message: "At least one timing is required" });
     }
 
-    const updated = await BusRoute.findByIdAndUpdate(
-      id,
+    const updated = await BusRoute.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
       { bus, route, timings, status, assignedBy, remarks },
       { new: true }
     );
@@ -221,7 +222,11 @@ export const deleteBusRoute = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleted = await BusRoute.findByIdAndDelete(id);
+    const deleted = await BusRoute.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
+      { isDeleted: true },
+      { new: true }
+    );
 
     if (!deleted) {
       return res.status(404).json({ message: "Mapping not found" });

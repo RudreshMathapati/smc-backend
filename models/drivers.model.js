@@ -10,6 +10,11 @@ const driverSchema = new mongoose.Schema(
       required: true,
       default: "Temporary",
     },
+    phone_no: { type: String },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { collection: "Drivers", timestamps: true }
 );

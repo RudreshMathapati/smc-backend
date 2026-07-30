@@ -35,6 +35,12 @@ const userSchema = new mongoose.Schema(
             enum: ["USER", "ADMIN"],
             default: "USER",
         },
+
+        // Soft delete — preserves all history when admin removes a user account
+        isDeleted: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true, collection: "users" }
 );

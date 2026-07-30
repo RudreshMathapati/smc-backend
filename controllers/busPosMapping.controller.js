@@ -15,16 +15,16 @@ const validateBusAndPOS = async (busId, posMachineId) => {
 
   // Fetch both documents in parallel
   const [bus, pos] = await Promise.all([
-    Bus.findById(busId),
-    POSMachine.findById(posMachineId),
+    Bus.findOne({ _id: busId, isDeleted: { $ne: true } }),
+    POSMachine.findOne({ _id: posMachineId, isDeleted: { $ne: true } }),
   ]);
 
   // Handle not found cases
   if (!bus) {
-    throw new Error("Bus not found");
+    throw new Error("Bus not found or is deleted");
   }
   if (!pos) {
-    throw new Error("POS Machine not found");
+    throw new Error("POS Machine not found or is deleted");
   }
 
   // Return valid references
@@ -45,7 +45,10 @@ export const assignPOSMachine = async (req, res) => {
     }
 
     const existing = await BusPOS.findOne({
-      $or: [{ bus: busId }, { posMachine: posDeviceId }],
+      $or: [
+        { bus: busId, isDeleted: { $ne: true } },
+        { posMachine: posDeviceId, isDeleted: { $ne: true } }
+      ],
     });
 
     if (existing) {
@@ -72,14 +75,16 @@ export const assignPOSMachine = async (req, res) => {
 // Read All Assignments
 export const getAllBusPOSMappings = async (_req, res) => {
   try {
-    const assignments = await BusPOS.find({})
+    const assignments = await BusPOS.find({ isDeleted: { $ne: true } })
       .populate("bus")
       .populate("posMachine");
 
+    const filtered = assignments.filter(a => a.bus && !a.bus.isDeleted && a.posMachine && !a.posMachine.isDeleted);
+
     return res.status(200).json({
       success: true,
-      total: assignments.length,
-      data: assignments,
+      total: filtered.length,
+      data: filtered,
     });
   } catch (error) {
     console.error("Error fetching bus-pos mappings:", error.message);
@@ -107,7 +112,10 @@ export const updatePOSAssignment = async (req, res) => {
     }
 
     const conflict = await BusPOS.findOne({
-      $or: [{ bus: busId }, { posMachine: posDeviceId }],
+      $or: [
+        { bus: busId, isDeleted: { $ne: true } },
+        { posMachine: posDeviceId, isDeleted: { $ne: true } }
+      ],
       _id: { $ne: id }, // exclude current assignment from conflict check
     });
 
@@ -117,8 +125,8 @@ export const updatePOSAssignment = async (req, res) => {
       });
     }
 
-    const updatedAssignment = await BusPOS.findByIdAndUpdate(
-      id,
+    const updatedAssignment = await BusPOS.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
       { bus: busId, posMachine: posDeviceId },
       { new: true }
     );
@@ -133,12 +141,16 @@ export const updatePOSAssignment = async (req, res) => {
   }
 };
 
-// Delete Assignment
+// Delete Assignment (soft delete)
 export const deletePOSAssignment = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const deleted = await BusPOS.findByIdAndDelete(id);
+    const deleted = await BusPOS.findOneAndUpdate(
+      { _id: id, isDeleted: { $ne: true } },
+      { isDeleted: true },
+      { new: true }
+    );
 
     if (!deleted) {
       return res.status(404).json({ message: "Assignment not found" });

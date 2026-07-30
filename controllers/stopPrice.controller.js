@@ -14,7 +14,7 @@ export const createStopPrice = async (req, res) => {
 // ✅ Get all stops with prices
 export const getAllStopPrices = async (req, res) => {
   try {
-    const stops = await stopPrice.find();
+    const stops = await stopPrice.find({ isDeleted: { $ne: true } });
     res.status(200).json(stops);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -46,11 +46,13 @@ export const updateStopPrice = async (req, res) => {
   }
 };
 
-// ✅ Delete stop/price by ID
+// ✅ Delete stop/price by ID (soft delete)
 export const deleteStopPrice = async (req, res) => {
   try {
-    const stop = await stopPrice.findByIdAndDelete(req.params.id);
+    const stop = await stopPrice.findById(req.params.id);
     if (!stop) return res.status(404).json({ message: "Stop not found" });
+    stop.isDeleted = true;
+    await stop.save();
     res.status(200).json({ message: "Stop deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });

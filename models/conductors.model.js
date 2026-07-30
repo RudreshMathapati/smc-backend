@@ -14,6 +14,10 @@ const conductorSchema = new mongoose.Schema(
       default: "Temporary", // default if not selected
     },
     phone_no: { type: String },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { collection: "Conductor", timestamps: true }
 );

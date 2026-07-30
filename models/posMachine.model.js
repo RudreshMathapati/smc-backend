@@ -23,6 +23,14 @@ const posMachineSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    serialNumber: {
+      type: String,
+      trim: true,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

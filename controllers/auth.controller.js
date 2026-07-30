@@ -39,7 +39,8 @@ export const loginUser = async (req, res) => {
         const { username, password, rememberMe } = req.body;
 
         const user = await User.findOne({ 
-            username: { $regex: new RegExp(`^${username}$`, "i") } 
+            username: { $regex: new RegExp(`^${username}$`, "i") },
+            isDeleted: { $ne: true }
         });
         if (!user)
             return res.status(400).json({ message: "Invalid credentials" });

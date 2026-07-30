@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
 
 // ✅ Get User Profile (Protected)
 export const getProfile = async (req, res) => {
@@ -23,11 +24,10 @@ export const getProfile = async (req, res) => {
 // Get all user from DB
 export const getAllUsers = async (req, res) => {
   try {
-    const allUsers = await User.find();
+    const allUsers = await User.find({ isDeleted: { $ne: true } });
     return res.status(200).json({ allUsers, message: "Successfull all users" });
   } catch (error) {
     console.error("Error in get all users in userController", error.message);
-    ("");
   }
 };
 
@@ -69,11 +69,19 @@ export const deleteUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid user ID format" });
     }
 
-    const user = await User.findByIdAndDelete(userId);
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    // Soft delete — append timestamp suffix to release unique fields
+    const suffix = `_deleted_${Date.now()}`;
+    user.isDeleted = true;
+    if (user.username) user.username = user.username + suffix;
+    if (user.email)    user.email    = user.email    + suffix;
+    if (user.phone)    user.phone    = user.phone    + suffix;
+    await user.save();
 
     res.status(200).json({ message: "User deleted successfully" });
   } catch (err) {

@@ -1,108 +1,3 @@
-// import express from "express";
-// import dotenv from "dotenv";
-// import cors from "cors";
-// import http from "http";
-// import cookieParser from "cookie-parser";
-// import { Server as SocketServer } from "socket.io";
-
-// import routeRoutes from "./routes/route.route.js";
-// import buses from "./routes/bus.route.js";
-// import userRoutes from "./routes/user.route.js";
-// import busRoutesMapping from "./routes/busRouteMapping.route.js";
-// import PosMachine from "./routes/pos.route.js";
-// import busPosMapping from "./routes/busPosMapping.route.js";
-// import authRoutes from "./routes/auth.route.js";
-// import conductorRoutes from "./routes/conductors.route.js";
-// import connectDB from "./utils/connectDB.js";
-// import stopPriceRoutes from "./routes/stopPrice.route.js";
-// import pass from "./routes/pass.route.js";
-// import gpsRoutes from "./routes/gps.route.js";
-// import fareRoutes from "./routes/fareRoutes.js";
-// import conductorBusRoutes from "./routes/conductorBus.route.js";
-// import reportRoutes from "./routes/reports.route.js";
-
-// dotenv.config();
-
-// const app = express();
-// const PORT = process.env.PORT || 5000;
-
-// // ✅ Allowed Origins (Local + Vercel)
-// const allowedOrigins = [
-//     "https://smc-frontend-three.vercel.app",
-//     "https://smc-frontend-git-main-rudreshmathapatis-projects.vercel.app",
-//     "https://smc-frontend-mim6z9h2z-rudreshmathapatis-projects.vercel.app",
-//     "http://localhost:3000"
-// ];
-
-// // ✅ CORS Setup
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     if (!origin) return callback(null, true);
-//     if (allowedOrigins.includes(origin)) {
-//       return callback(null, true);
-//     } else {
-//       return callback(null, true);
-//     }
-//   },
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//   credentials: true,
-// }));
-
-// app.options("*", cors());
-
-// app.use(cookieParser());
-// app.use(express.json());
-
-// // 🔀 API Routes
-// app.use("/api", fareRoutes);
-// app.use("/api/routes", routeRoutes);
-// app.use("/api/buses", buses);
-// app.use("/api/bus-routes-mapping", busRoutesMapping);
-// app.use("/api/users", userRoutes);
-// app.use("/api/pos-machines", PosMachine);
-// app.use("/api/bus-pos-mapping", busPosMapping);
-// app.use("/api/auth", authRoutes);
-// app.use("/api/conductors", conductorRoutes);
-// app.use("/api/stop-prices", stopPriceRoutes);
-// app.use("/api/passes", pass);
-// app.use("/api/gps", gpsRoutes);
-// app.use("/api/conductor-bus", conductorBusRoutes);
-// app.use("/api/reports", reportRoutes);
-
-
-
-// // 🛰️ Create HTTP server
-// const server = http.createServer(app);
-
-// // 🛰️ Socket.IO Setup
-// const io = new SocketServer(server, {
-//   cors: {
-//     origin: allowedOrigins,
-//     methods: ["GET", "POST"],
-//     credentials: true
-//   },
-// });
-
-// io.on("connection", (socket) => {
-//   console.log("📡 Client connected:", socket.id);
-
-//   socket.on("disconnect", () => {
-//     console.log("❌ Client disconnected:", socket.id);
-//   });
-// });
-
-// // Home route
-// app.get("/", (req, res) => {
-//   res.send("SMC Backend API is running");
-// });
-
-// // 🚀 Start Server
-// server.listen(PORT, () => {
-//   connectDB();
-//   console.log(`🚀 Server running on port ${PORT}`);
-// });
-
-
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -133,6 +28,10 @@ import shiftRoutes from "./routes/shiftAssignment.route.js";
 import { startDashboardEmitter } from "./services/socket.service.js";
 import conductorAuthRoutes from "./routes/conductorAuth.route.js"; // 🆕 POS Issue App
 import posIssueRoutes from "./routes/posIssue.route.js"; // 🆕 POS Issue App
+import cashierCollectionRoutes from "./routes/cashierCollection.route.js"; // 💰 Cashier Collections
+import busBreakdownRoutes from "./routes/busBreakdown.route.js"; // 🚌 Bus Breakdowns
+import dailyReportRoutes from "./routes/dailyReport.route.js"; // 📊 Daily Report
+import ticketRoutes from "./routes/ticket.route.js"; // 🎫 Ticket save with shift
 
 dotenv.config();
 
@@ -154,7 +53,7 @@ const corsOptions = {
       callback(null, true);
     }
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   credentials: true,
 };
 
@@ -185,6 +84,10 @@ app.use("/api/stop-master", stopMasterRoutes);
 app.use("/api/shifts", shiftRoutes);
 app.use("/api/conductor-auth", conductorAuthRoutes); // 🆕 POS Issue App - Conductor login
 app.use("/api/pos-issues", posIssueRoutes); // 🆕 POS Issue App - Issue management
+app.use("/api/cashier-collections", cashierCollectionRoutes); // 💰 Cashier cash collection system
+app.use("/api/bus-breakdowns", busBreakdownRoutes); // 🚌 Bus Breakdowns
+app.use("/api/daily-report", dailyReportRoutes); // 📊 Daily Report
+app.use("/api/tickets", ticketRoutes); // 🎫 Ticket save with shift
 
 // 🛰️ Socket.IO Setup
 const server = http.createServer(app);
@@ -213,9 +116,6 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
-
-  // 🔥 CLEANUP (IMPORTANT)
-  socket.removeAllListeners();
 });
 
 // 🚀 Start Dashboard Emitter

@@ -10,8 +10,14 @@ const connectDB = async () => {
     });
 
     console.log(`✅ MongoDB Connected: ${con.connection.host}`);
-    // Optional: see full connection object
-    // console.log(con.connection);
+    
+    // Drop the old shiftassignments index to let mongoose build the partial index correctly
+    try {
+      await mongoose.connection.db.collection("shiftassignments").dropIndex("personId_1_shift_1");
+      console.log("✅ Successfully dropped old shiftassignments index");
+    } catch (e) {
+      console.log("ℹ️ Old shiftassignments index not found or already dropped");
+    }
   } catch (err) {
     console.error("❌ MongoDB Connection Error:", err.message);
     process.exit(1); // Stop the server if DB fails

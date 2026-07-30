@@ -32,7 +32,7 @@ export const createRouteMaster = async (req, res) => {
 // Get all route master entries
 export const getAllRouteMasters = async (req, res) => {
   try {
-    const entries = await RouteMaster.find().sort({ createdAt: -1 });
+    const entries = await RouteMaster.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
     res.status(200).json(entries);
   } catch (error) {
     console.error("Error fetching route master entries:", error);
@@ -77,13 +77,21 @@ export const updateRouteMaster = async (req, res) => {
 export const deleteRouteMaster = async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await RouteMaster.findByIdAndDelete(id);
+    const entry = await RouteMaster.findById(id);
 
-    if (!deleted) {
+    if (!entry) {
       return res.status(404).json({ message: "Route master entry not found" });
     }
 
-    res.status(200).json({ message: "Route master entry deleted", data: deleted });
+    if (entry.isDeleted) {
+      return res.status(400).json({ message: "Route master entry is already deleted" });
+    }
+
+    entry.isDeleted = true;
+    entry.routeId = `${entry.routeId}_deleted_${Date.now()}`;
+    await entry.save();
+
+    res.status(200).json({ message: "Route master entry deleted", data: entry });
   } catch (error) {
     console.error("Error deleting route master entry:", error);
     res.status(500).json({ message: "Server error" });

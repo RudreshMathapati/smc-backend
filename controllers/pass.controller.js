@@ -23,7 +23,7 @@ export const createPass = async (req, res) => {
 // @route GET /api/passes
 export const getPasses = async (req, res) => {
   try {
-    const passes = await Pass.find();
+    const passes = await Pass.find({ isDeleted: { $ne: true } });
     res.json(passes);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -61,12 +61,14 @@ export const updatePass = async (req, res) => {
   }
 };
 
-// @desc Delete a pass
+// @desc Delete a pass (soft delete)
 // @route DELETE /api/passes/:id
 export const deletePass = async (req, res) => {
   try {
-    const pass = await Pass.findByIdAndDelete(req.params.id);
+    const pass = await Pass.findById(req.params.id);
     if (!pass) return res.status(404).json({ message: "Pass not found" });
+    pass.isDeleted = true;
+    await pass.save();
     res.json({ message: "Pass deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -89,6 +89,11 @@ const busRouteSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    // Soft delete — preserves bus-route mapping history
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
